@@ -1,0 +1,88 @@
+{
+	"Description":"IAM and SSM parameters to be deployed in agency account",
+	"Parameters":
+	{
+		"ActivationCode" :{
+			"Type": "String",
+			"Description": "Activation Code generated in central account"
+		},
+		"ActivationID" :{
+			"Type": "String",
+			"Description": "ActivationID generated in the central account"
+		}
+	},
+
+	"Resources":{
+		"SSMInstanceProfile":{
+		   "Type": "AWS::IAM::InstanceProfile",
+		   "Properties": {
+		      "InstanceProfileName": "SSM-registration-instance-profile",
+		      "Roles": [{"Ref":"InstanceRole"}]
+		   }
+		},
+		
+		"InstanceRole": {
+		    "Type": "AWS::IAM::Role",
+		    "Properties": {
+		    	"RoleName" :"InstanceProileRole",
+				"AssumeRolePolicyDocument": {
+				    "Version": "2012-10-17",
+				    "Statement": [
+				        {
+				          "Effect": "Allow",
+				          "Principal": {
+				            "Service": [ "ec2.amazonaws.com" ]
+				          },
+				          "Action": [ "sts:AssumeRole" ]
+				        }
+				    ]
+				}
+			}
+		},
+
+   		"SSMInstancePolicy": {
+		   "Type": "AWS::IAM::Policy",
+		   "Properties": {
+		      	"PolicyName": "SSM-registration-instance-policy",
+		      	"PolicyDocument": {
+			         "Version": "2012-10-17",
+					    "Statement": [
+					        {
+					            "Action": [
+					                "ec2:CreateTags",
+					                "ec2:DescribeInstances"
+					            ],
+					            "Effect": "Allow",
+					            "Resource": "*"
+					        },
+					        {
+					            "Effect": "Allow",
+					            "Action": [
+					                "ssm:GetParameter"
+					            ],
+					            "Resource": "*"
+					        }
+					    ]
+			      	},
+			    "Roles": [{"Ref":"InstanceRole"}]
+			}
+		},
+
+		"SSMActivationCode" :{
+			"Type": "AWS::SSM::Parameter",
+			"Properties":{
+				"Type": "String",
+				"Name":"ActivationCode",
+				"Value":{"Ref": "ActivationCode"}
+			}
+		},
+		"SSMActivationId" :{
+			"Type": "AWS::SSM::Parameter",
+			"Properties":{
+				"Type":"String",
+				"Name":"ActivationID",
+				"Value": {"Ref": "ActivationID"}
+			}
+		}
+	}
+}
