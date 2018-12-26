@@ -1,0 +1,60 @@
+{	
+	"AWSTemplateFormatVersion" : "2010-09-09",
+	"Description" : "SSM demo purpose launch instances",
+	"Parameters":{
+		"MyKeyPair":{
+			"Type": "AWS::EC2::KeyPair::KeyName",
+			"Description": "Please choose your keypair for launching instances"
+		}
+	},
+	"Resources":{
+		"EC2Instance1":{
+			"Type":"AWS::EC2::Instance",
+			"Properties":{
+				"ImageId": "ami-09693313102a30b2c",
+				"KeyName": "ksong",
+				"IamInstanceProfile":"SSM-registration-instance-profile",
+				"InstanceType":"t2.micro",
+	 			"UserData": {"Fn::Base64" : { "Fn::Join" : ["",[
+								"#!/bin/bash -ex","\n",
+					            "yum update -y ","\n",
+								"yum install python-pip -y ","\n",
+					            "yum install python2-boto3 -y ","\n",
+							"curl https://raw.githubusercontent.com/KunSongGo/ssm-central-managed-demo/master/hepler-scrips/regist_instance-ama2.py | python"]]}
+				}
+			}
+	 	},
+	 	"EC2Instance2":{
+			"Type":"AWS::EC2::Instance",
+			"Properties":{
+				"ImageId": "ami-09693313102a30b2c",
+				"KeyName": {"Ref":"MyKeyPair"},
+				"IamInstanceProfile":"SSM-registration-instance-profile",
+				"InstanceType":"t2.micro",
+	 			"UserData": {"Fn::Base64" : { "Fn::Join" : ["",[
+								"#!/bin/bash -ex","\n",
+					            "yum update -y ","\n",
+								"yum install python-pip -y ","\n",
+					            "yum install python2-boto3 -y ","\n",
+							"curl https://raw.githubusercontent.com/KunSongGo/ssm-central-managed-demo/master/hepler-scrips/regist_instance-ama2.py | python"]]}
+				}
+			}
+	 	},
+	 	"EC2Instance3":{
+			"Type":"AWS::EC2::Instance",
+			"Properties":{
+				"ImageId": "ami-09693313102a30b2c",
+				"KeyName": {"Ref":"MyKeyPair"},
+				"IamInstanceProfile":"SSM-registration-instance-profile",
+				"InstanceType":"t2.micro",
+	 			"UserData": {"Fn::Base64" : { "Fn::Join" : ["",[
+								"#!/bin/bash -ex","\n",
+					            "yum update -y ","\n",
+								"yum install python-pip -y ","\n",
+					            "yum install python2-boto3 -y ","\n",
+							"curl https://raw.githubusercontent.com/KunSongGo/ssm-central-managed-demo/master/hepler-scrips/regist_instance-ama2.py | python"]]}
+				}
+			}
+	 	}
+	}
+}
