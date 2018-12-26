@@ -1,5 +1,9 @@
 #!/usr/bin/python
 
+############################################
+# This script is adapted to Amazon Linux 2 #
+############################################
+
 import os
 import urllib2
 import json
