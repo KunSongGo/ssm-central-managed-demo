@@ -1,0 +1,127 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Management function that copies tags
+Parameters:
+  AgencyAccountId1:
+    Type: String
+    Description: First Agency Account ID
+    AllowedPattern: \d{12}
+    ConstraintDescription : Value must be a valid AWS Account ID (12 digits)
+  AgencyAccountId2:
+    Type: String
+    Description: Second Agency Account ID
+    AllowedPattern: \d{12}
+    ConstraintDescription : Value must be a valid AWS Account ID (12 digits)    
+Resources:
+  permSSMTagManagerClientPermission1:
+      Type: AWS::Lambda::Permission
+      Properties:
+        Action: lambda:InvokeFunction
+        FunctionName: !Ref fnSSMTagManager
+        Principal:  !Sub arn:aws:iam::${AgencyAccountId1}:root
+  permSSMTagManagerClientPermission2:
+      Type: AWS::Lambda::Permission
+      Properties:
+        Action: lambda:InvokeFunction
+        FunctionName: !Ref fnSSMTagManager
+        Principal:  !Sub arn:aws:iam::${AgencyAccountId2}:root
+  rSSMTagManagerRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: Automation-SSMTagManagerRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: "/aws/"
+      Policies:
+        - PolicyName: "CopyInstanceTagsToSSMPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                - ssm:AddTagsToResource
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+                Resource: "*"
+
+  fnSSMTagManager:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: Automation-SSM-Tag-Manager
+      Handler: index.lambda_handler
+      Role: !GetAtt [rSSMTagManagerRole, Arn]
+      Description: >
+        Copies tags from the list of instances in the event
+        context to the specified managed instances.
+      Code:
+        ZipFile: |+
+          #####################################################################
+          # SSMTagManager
+          #
+          # Assigns tags to SSM Managed instances.
+          #
+          # This function is called with an event data packet that at a minimum
+          # looks like this:
+          #   {
+          #     "instances": [
+          #       {
+          #         "instanceId" : "mi-123456789abcdef12",
+          #         "tags" : [
+          #           {
+          #             "Key": "Stack",
+          #             "Value" : "Production"
+          #           },
+          #           {
+          #             "Key": "PatchGroup",
+          #             "Value" : "Windows-Prod"
+          #           },
+          #           {
+          #             "Key": "Misc",
+          #             "Value" : "Value"
+          #           }
+          #         ]
+          #       }
+          #     ]
+          #   }
+          #####################################################################
+          import boto3
+          import json
+          import logging
+
+          #setup simple logging for INFO
+          logger = logging.getLogger()
+          logger.setLevel( logging.WARN )
+
+          client = boto3.client( 'ssm' )
+
+          def lambda_handler( event, context ):
+              """Copies tags from the list of instances in the event
+              context to the specified managed instances.
+              """
+              for instance in event[ "instances" ]:
+                 addTags( instance[ "instanceId" ], instance[ "tags" ] )
+
+          def addTags( resourceid, tags ):
+              logger.info( "Configuring " + resourceid + " with " + str(tags) )
+              try:
+                  response = client.add_tags_to_resource(
+                      ResourceType='ManagedInstance',
+                      ResourceId=resourceid,
+                      Tags=tags
+                  )
+                  logger.info( response )
+                  return response
+              except Exception as e:
+                  errorMessage = str(e) + "instanceId: " + resourceid
+                  logger.error( errorMessage )
+                  return errorMessage
+
+      Runtime: python3.6
+      Timeout: '90'
