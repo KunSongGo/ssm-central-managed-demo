@@ -16,6 +16,9 @@ $ aws ssm create-activation --iam-role IAM-ROLE-FOR-SSM-INSTANCE  --registration
 
 3. Deploy "agency-account-setup.json" in agency account and enter the activate id+code with central account id+region at stack creation 
 
-4. Deploy "agency-account-instance-luanches.json" in agency account to launch instances. Instances will be registered to central account SSM. 
+4. Deploy "agency-account-instance-luanches.json" in agency account in eu-west-1 region to launch instances. Instances will be registered to central account SSM. 
 
 5. Deploy "agency-account-ssm-ec2-tag-collector.yaml" in agency account to create lambda to send tags to central account 
+
+
+Please note that "agency-account-instance-luanches.json" file contains image id for amazon linux 2 image in eu-west-1 region, if you deploy this script in other regions, please change them to image ids in corresponding regions. 
