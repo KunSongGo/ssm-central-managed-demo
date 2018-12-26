@@ -4,7 +4,7 @@ This is a demo usage for a solution explained in this page :
 
 # Demo step: 
 1. Run AWS CLI command to generate an activation ID and code : 
-$  aws ssm create-activation --iam-role IAM-ROLE-FOR-SSM-INSTANCE  --registration-limit 100 --expiration-date 2019-01-19T00:00 --default-instance-name AGENCEY-ACCOUNTS
+$ aws ssm create-activation --iam-role IAM-ROLE-FOR-SSM-INSTANCE  --registration-limit 100 --expiration-date 2019-01-19T00:00 --default-instance-name AGENCEY-ACCOUNTS
 {
     "ActivationCode": "xxxxxxxxxxx+4Ok",
     "ActivationId": "xxxxx-xxxx-xxxxx-xxxxx-xxxxxxxx"
