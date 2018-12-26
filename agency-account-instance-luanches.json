@@ -12,7 +12,7 @@
 			"Type":"AWS::EC2::Instance",
 			"Properties":{
 				"ImageId": "ami-09693313102a30b2c",
-				"KeyName": "ksong",
+				"KeyName": {"Ref":"MyKeyPair"},
 				"IamInstanceProfile":"SSM-registration-instance-profile",
 				"InstanceType":"t2.micro",
 	 			"UserData": {"Fn::Base64" : { "Fn::Join" : ["",[
