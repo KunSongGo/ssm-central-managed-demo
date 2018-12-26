@@ -4,11 +4,15 @@ This is a demo usage for a solution explained in this page :
 
 # Demo step: 
 1. Run AWS CLI command to generate an activation ID and code : 
+
 $ aws ssm create-activation --iam-role IAM-ROLE-FOR-SSM-INSTANCE  --registration-limit 100 --expiration-date 2019-01-19T00:00 --default-instance-name AGENCEY-ACCOUNTS
 {
     "ActivationCode": "xxxxxxxxxxx+4Ok",
     "ActivationId": "xxxxx-xxxx-xxxxx-xxxxx-xxxxxxxx"
 }
+
 2. Deploy "central-account-ssm-tag-manager.yaml" template in central management account and enter two demo agency account ids at stack creation. 
+
 3. Deploy "agency-account-setup.json" in agency account and enter the activate id+code with central account id+region at stack creation 
-3. Deploy "instance-luanches.json" in agency account to launch instances. Instances will be registered to central account SSM. 
+
+4. Deploy "instance-luanches.json" in agency account to launch instances. Instances will be registered to central account SSM. 
