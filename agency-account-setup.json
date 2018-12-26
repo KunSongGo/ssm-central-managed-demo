@@ -6,9 +6,9 @@
 			"Type": "String",
 			"Description": "Activation Code generated in central account"
 		},
-		"ActivationID" :{
+		"ActivationId" :{
 			"Type": "String",
-			"Description": "ActivationID generated in the central account"
+			"Description": "ActivationId generated in the central account"
 		}
 	},
 
@@ -80,8 +80,8 @@
 			"Type": "AWS::SSM::Parameter",
 			"Properties":{
 				"Type":"String",
-				"Name":"ActivationID",
-				"Value": {"Ref": "ActivationID"}
+				"Name":"ActivationId",
+				"Value": {"Ref": "ActivationId"}
 			}
 		}
 	}
