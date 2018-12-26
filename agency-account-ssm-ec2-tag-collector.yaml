@@ -1,0 +1,126 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+    EC2 To SSM Tag Copy Helper function. This function copies user tags
+    from EC2 instances in agency accounts to Systems Manager instances in
+    the Central management account. It runs as a scheduled cron job and
+    calls the central Automation-SSM-Tag-Manager function
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      -
+        Label:
+          default: Management Account Configuration
+        Parameters:
+          - CentralAccountId
+Parameters:
+  CentralAccountId:
+    Type: String
+    Description: Central Account ID
+    AllowedPattern: \d{12}
+    ConstraintDescription : Value must be a valid AWS Account ID (12 digits)
+  CentralAccountRegion:
+    Type: String
+    Description: Central Account Region
+    ConstraintDescription: Enter Region in terms of regional code such as us-east-1. 
+
+Resources:
+  cronEC2TagsCollector:
+    Type: AWS::Events::Rule
+    DependsOn: fnEC2TagsCollector
+    Properties:
+      Name: Automation-EC2-Tags-Collector
+      ScheduleExpression: rate(5 minutes)
+      State: "ENABLED"
+      Targets:
+      - Arn:
+          Fn::GetAtt: [ fnEC2TagsCollector, "Arn" ]
+        Id: fnEC2TagsCollector
+  permCronForEC2TagCollectorPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn: fnEC2TagsCollector
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt: [ fnEC2TagsCollector, "Arn" ]
+      Principal: events.amazonaws.com
+  rEC2TagsCollectorRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: Automation-Role-For-EC2TagsCollector
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: "/aws/"
+      Policies:
+        - PolicyName: "EC2ToSSMTaggingPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                - ec2:Describe*
+                - lambda:InvokeFunction
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+                Resource: "*"
+  fnEC2TagsCollector:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: Automation-EC2-Tags-Collector
+      Handler: index.lambda_handler
+      Role: !GetAtt [rEC2TagsCollectorRole, Arn]
+      Code:
+        ZipFile: !Sub |+
+            import json
+            import boto3
+            import logging
+
+            #setup simple logging for INFO
+            logger = logging.getLogger()
+            logger.setLevel(logging.DEBUG)
+
+            #define the connection region
+            ec2 = boto3.resource('ec2')
+            lambdaClient = boto3.client('lambda',region_name="${CentralAccountRegion}")
+
+            filters = [
+                          {
+                              'Name': 'instance-state-name',
+                              'Values': ['running', 'stopped']
+                          },
+                          {
+                              'Name': 'tag-key',
+                              'Values': ['managedinstanceid']
+                          }
+                      ]
+
+            def lambda_handler(event, context):
+                base = ec2.instances.filter(Filters=filters)
+                eventData = {"instances":[]}
+                eventDataInstances = eventData['instances']
+                #loop through instances and create a collection
+                for instance in base:
+                    logger.info ( "Reporting tag data for " + instance.id )
+                    for tag in instance.tags:
+                        if instance.tags is not None:
+                            if tag['Key'] == 'managedinstanceid':
+                                managedInstanceId = tag['Value']
+                                logger.info( "Found managed instance id " + managedInstanceId)
+                                eventDataInstances.append({ "instanceId": managedInstanceId, "tags": [{"Key":"EC2instanceID", "Value":instance.instance_id}, {"Key":"EC2Instance-type", "Value":instance.instance_type}, {"Key":"AccountId", "Value":"${AWS::AccountId}"},{"Key":"Region", "Value":"${AWS::Region}"}]})
+               
+                logger.info( "Ready to send data to SSM Tagger: " + str(eventData) )
+
+                response = lambdaClient.invoke(
+                    FunctionName="arn:aws:lambda:${CentralAccountRegion}:${CentralAccountId}:function:Automation-SSM-Tag-Manager",
+                    InvocationType='Event',
+                    Payload=json.dumps(eventData)
+                    )
+      Runtime: python3.6
+      Timeout: '90'
