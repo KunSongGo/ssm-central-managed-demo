@@ -1,0 +1,110 @@
+{	
+	"AWSTemplateFormatVersion" : "2010-09-09",
+	"Description" : "SSM demo purpose launch instances",
+	"Parameters":{
+		"MyKeyPair":{
+			"Type": "AWS::EC2::KeyPair::KeyName",
+			"Description": "Please choose your keypair for launching instances"
+		},
+		"ActivationCode" :{
+			"Type": "String",
+			"Description": "Activation Code generated in central account"
+		},
+		"ActivationId" :{
+			"Type": "String",
+			"Description": "ActivationId generated in the central account"
+		}
+	},
+	"Resources":{
+	 	"EC2Instance1":{
+			"Type":"AWS::EC2::Instance",
+			"Properties":{
+				"ImageId": "ami-0dad95819a9372f76",
+				"KeyName": {"Ref":"MyKeyPair"},
+				"IamInstanceProfile":"SSM-registration-instance-profile",
+				"InstanceType":"t2.micro",
+	 			"UserData": {"Fn::Base64" : { "Fn::Join" : ["",[
+								"<powershell>","\n",
+								"$code = \"", {"Ref": "ActivationCode"},"\"","\n",
+								"$id = \"", {"Ref": "ActivationId"},"\"", "\n",
+								"$region = \"eu-west-1\"","\n",
+								"$dir = $env:TEMP + \"\\ssm\"","\n",
+								"New-Item -ItemType directory -Path $dir -Force","\n",
+								"cd $dir","\n",
+								"(New-Object System.Net.WebClient).DownloadFile(\"https://amazon-ssm-$region.s3.amazonaws.com/latest/windows_amd64/AmazonSSMAgentSetup.exe\", $dir + \"\\AmazonSSMAgentSetup.exe\")","\n",
+								"Start-Process .\\AmazonSSMAgentSetup.exe -ArgumentList @(\"/q\", \"/log\", \"install.log\", \"CODE=$code\", \"ID=$id\", \"REGION=$region\") -Wait","\n",
+								"Get-Service -Name \"AmazonSSMAgent\"","\n",
+								"Import-Module AWSPowerShell","\n",
+								"$Registration = Get-Content ($env:ProgramData + \"\\Amazon\\SSM\\InstanceData\\registration\") | Out-String | ConvertFrom-Json","\n",
+								"$RegistrationVlue = $Registration.ManagedInstanceID","\n",
+								"$instanceId = (Invoke-WebRequest -Uri http://169.254.169.254/latest/meta-data/instance-id).Content","\n",
+								"$EC2TAG = New-Object Amazon.EC2.Model.Tag","\n",
+								"$EC2TAG.key = \"managedinstanceid\"","\n",
+								"$EC2TAG.value = $RegistrationVlue","\n",
+								"New-EC2Tag -Resource $instanceId -Tag $EC2TAG","\n",
+								"</powershell>","\n"]]}
+				}
+			}
+	 	},
+	 	"EC2Instance2":{
+			"Type":"AWS::EC2::Instance",
+			"Properties":{
+				"ImageId": "ami-0dad95819a9372f76",
+				"KeyName": {"Ref":"MyKeyPair"},
+				"IamInstanceProfile":"SSM-registration-instance-profile",
+				"InstanceType":"t2.micro",
+	 			"UserData": {"Fn::Base64" : { "Fn::Join" : ["",[
+								"<powershell>","\n",
+								"$code = \"", {"Ref": "ActivationCode"},"\"","\n",
+								"$id = \"", {"Ref": "ActivationId"},"\"", "\n",
+								"$region = \"eu-west-1\"","\n",
+								"$dir = $env:TEMP + \"\\ssm\"","\n",
+								"New-Item -ItemType directory -Path $dir -Force","\n",
+								"cd $dir","\n",
+								"(New-Object System.Net.WebClient).DownloadFile(\"https://amazon-ssm-$region.s3.amazonaws.com/latest/windows_amd64/AmazonSSMAgentSetup.exe\", $dir + \"\\AmazonSSMAgentSetup.exe\")","\n",
+								"Start-Process .\\AmazonSSMAgentSetup.exe -ArgumentList @(\"/q\", \"/log\", \"install.log\", \"CODE=$code\", \"ID=$id\", \"REGION=$region\") -Wait","\n",
+								"Get-Service -Name \"AmazonSSMAgent\"","\n",
+								"Import-Module AWSPowerShell","\n",
+								"$Registration = Get-Content ($env:ProgramData + \"\\Amazon\\SSM\\InstanceData\\registration\") | Out-String | ConvertFrom-Json","\n",
+								"$RegistrationVlue = $Registration.ManagedInstanceID","\n",
+								"$instanceId = (Invoke-WebRequest -Uri http://169.254.169.254/latest/meta-data/instance-id).Content","\n",
+								"$EC2TAG = New-Object Amazon.EC2.Model.Tag","\n",
+								"$EC2TAG.key = \"managedinstanceid\"","\n",
+								"$EC2TAG.value = $RegistrationVlue","\n",
+								"New-EC2Tag -Resource $instanceId -Tag $EC2TAG","\n",
+								"</powershell>","\n"]]}
+				}
+			}
+	 	},
+	 	"EC2Instance3":{
+			"Type":"AWS::EC2::Instance",
+			"Properties":{
+				"ImageId": "ami-0dad95819a9372f76",
+				"KeyName": {"Ref":"MyKeyPair"},
+				"IamInstanceProfile":"SSM-registration-instance-profile",
+				"InstanceType":"t2.micro",
+	 			"UserData": {"Fn::Base64" : { "Fn::Join" : ["",[
+								"<powershell>","\n",
+								"$code = \"", {"Ref": "ActivationCode"},"\"","\n",
+								"$id = \"", {"Ref": "ActivationId"},"\"", "\n",
+								"$region = \"eu-west-1\"","\n",
+								"$dir = $env:TEMP + \"\\ssm\"","\n",
+								"New-Item -ItemType directory -Path $dir -Force","\n",
+								"cd $dir","\n",
+								"(New-Object System.Net.WebClient).DownloadFile(\"https://amazon-ssm-$region.s3.amazonaws.com/latest/windows_amd64/AmazonSSMAgentSetup.exe\", $dir + \"\\AmazonSSMAgentSetup.exe\")","\n",
+								"Start-Process .\\AmazonSSMAgentSetup.exe -ArgumentList @(\"/q\", \"/log\", \"install.log\", \"CODE=$code\", \"ID=$id\", \"REGION=$region\") -Wait","\n",
+								"Get-Service -Name \"AmazonSSMAgent\"","\n",
+								"Import-Module AWSPowerShell","\n",
+								"$Registration = Get-Content ($env:ProgramData + \"\\Amazon\\SSM\\InstanceData\\registration\") | Out-String | ConvertFrom-Json","\n",
+								"$RegistrationVlue = $Registration.ManagedInstanceID","\n",
+								"$instanceId = (Invoke-WebRequest -Uri http://169.254.169.254/latest/meta-data/instance-id).Content","\n",
+								"$EC2TAG = New-Object Amazon.EC2.Model.Tag","\n",
+								"$EC2TAG.key = \"managedinstanceid\"","\n",
+								"$EC2TAG.value = $RegistrationVlue","\n",
+								"New-EC2Tag -Resource $instanceId -Tag $EC2TAG","\n",
+								"</powershell>","\n"]]}
+				}
+			}
+	 	}
+	}
+}
